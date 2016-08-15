@@ -2,6 +2,7 @@ package memory
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/src-d/go-git.v3/core"
@@ -30,8 +31,10 @@ func NewObject(typ core.ObjectType, size int64, cont []byte) *Object {
 // type or the content has changed. The Hash is only generated if the size of
 // the content is exactly the Object.Size
 func (o *Object) Hash() core.Hash {
+	fmt.Println("before o.h : " + o.h.String())
 	if o.h == core.ZeroHash && int64(len(o.cont)) == o.sz {
 		o.h = core.ComputeHash(o.t, o.cont)
+		fmt.Println("after o.h : " + o.h.String())
 	}
 
 	return o.h

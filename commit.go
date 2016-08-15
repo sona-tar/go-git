@@ -74,6 +74,7 @@ func (c *Commit) Decode(o core.Object) (err error) {
 	}
 
 	c.Hash = o.Hash()
+	fmt.Println("o.Hash(): " + o.Hash().String())
 
 	reader, err := o.Reader()
 	if err != nil {
@@ -98,6 +99,7 @@ func (c *Commit) Decode(o core.Object) (err error) {
 			}
 
 			split := bytes.SplitN(line, []byte{' '}, 2)
+			fmt.Println("Debuggggggggggggggggggggg:" + string(split[0]))
 			switch string(split[0]) {
 			case "tree":
 				c.tree = core.NewHash(string(split[1]))
