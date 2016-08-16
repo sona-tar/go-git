@@ -27,10 +27,7 @@ func (s *Storage) ObjectStorage() (core.ObjectStorage, error) {
 		return s.o, nil
 	}
 
-	i, err := buildIndex(s.dir)
-	if err != nil {
-		return nil, err
-	}
+	i, _ := buildIndex(s.dir)
 
 	s.o = &ObjectStorage{dir: s.dir, index: i}
 	return s.o, nil

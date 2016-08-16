@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"gopkg.in/src-d/go-git.v4/core"
+	"gopkg.in/src-d/go-git.v4/formats/objfile"
 	"gopkg.in/src-d/go-git.v4/formats/packfile"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem/internal/dotgit"
 	"gopkg.in/src-d/go-git.v4/storage/filesystem/internal/index"
@@ -36,9 +37,26 @@ func (s *ObjectStorage) Set(core.Object) (core.Hash, error) {
 	return core.ZeroHash, fmt.Errorf("not implemented yet")
 }
 
+func (s *ObjectStorage) Get(h core.Hash) (core.Object, error) {
+	var obj core.Object
+	var err error
+
+	if s.index != nil {
+		obj, err = s.getFromPackfile(h)
+		if err == nil {
+			return obj, nil
+		}
+	}
+	obj, err = s.getFromSparse(h)
+	if err == nil {
+		return obj, nil
+	}
+	return nil, err
+}
+
 // Get returns the object with the given hash, by searching for it in
 // the packfile.
-func (s *ObjectStorage) Get(h core.Hash) (core.Object, error) {
+func (s *ObjectStorage) getFromPackfile(h core.Hash) (core.Object, error) {
 	offset, err := s.index.Get(h)
 	if err != nil {
 		return nil, err
@@ -72,6 +90,43 @@ func (s *ObjectStorage) Get(h core.Hash) (core.Object, error) {
 
 	obj := s.NewObject()
 	return obj, p.FillObject(obj)
+}
+
+func (s *ObjectStorage) getFromSparse(h core.Hash) (core.Object, error) {
+	fs, path, err := s.dir.Objectfile(h)
+	if err != nil {
+		panic(err)
+		return nil, err
+	}
+
+	f, err := fs.Open(path)
+	if err != nil {
+		panic(err)
+		return nil, err
+	}
+
+	defer func() {
+		errClose := f.Close()
+		if err == nil {
+			err = errClose
+		}
+	}()
+
+	obj := s.NewObject()
+	objReader, err := objfile.NewReader(f)
+	if err != nil {
+		return nil, err
+	}
+	err = objReader.FillObject(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	err = objReader.Close()
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
 }
 
 // Iter returns an iterator for all the objects in the packfile with the

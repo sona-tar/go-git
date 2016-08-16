@@ -118,6 +118,7 @@ func (r *Repository) createDefaultBranch(ref *core.Reference) error {
 // Commit return the commit with the given hash
 func (r *Repository) Commit(h core.Hash) (*Commit, error) {
 	obj, err := r.os.Get(h)
+
 	if err != nil {
 		if err == core.ErrObjectNotFound {
 			return nil, ErrObjectNotFound
